@@ -150,7 +150,7 @@ space in alert, choroid and RNFL in warning, everything else normal.
 
 ```
 src/
-  components/   EyeAvatar.jsx, AlertCard.jsx, PartChips.jsx, PartPanel.jsx, CheckupWidget.jsx, ...
+  components/   EyeAvatar.jsx, TabBar.jsx, TopBar.jsx, NextStepCard.jsx, AlertCard.jsx, Sheet.jsx, CheckupWidget.jsx, GuidedFlow.jsx, ...
   pages/        HomePage.jsx, LearnHomePage.jsx, LearnPage.jsx, CheckupsPage.jsx, RiskPage.jsx, RunTestPage.jsx
   services/     api.js
   data/         mockData.js, partContent.js
