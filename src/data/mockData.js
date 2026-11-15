@@ -94,6 +94,21 @@ export const eyeStatus = {
   },
 };
 
+// optional trend per measured part: monthly values ending on mission day 142
+const monthly = (values) => values.map((value, i) => ({ day: MISSION_DAY - (values.length - 1 - i) * 30, value }));
+const PART_HISTORY = {
+  "optic-disc": [0, 0, 1, 1, 2],
+  csf: [5.0, 5.3, 5.6, 6.0, 6.4],
+  choroid: [318, 340, 362, 389, 412],
+  rnfl: [96, 101, 109, 118, 132],
+  "optic-nerve": [3.0, 3.0, 3.1, 3.1, 3.1],
+  retina: [272, 274, 275, 277, 278],
+  intracranial: [11, 12, 12, 13, 14],
+  sattler: [90, 92, 95, 97, 98],
+  haller: [150, 155, 160, 165, 168],
+};
+for (const [id, values] of Object.entries(PART_HISTORY)) eyeStatus.parts[id].history = monthly(values);
+
 /* ---------- alerts ---------- */
 
 export const alerts = [
@@ -367,121 +382,3 @@ export const experiments = [
   },
 ];
 
-/* ---------- learn content ---------- */
-
-export const partInfo = {
-  "optic-disc": {
-    plain: "Swelling where the nerve leaves the eye",
-    whySpace: "In microgravity, body fluids shift toward the head. Pressure from the fluid around the optic nerve and from the blood vessels can make the disc swell. Disc swelling (edema) is the signature sign of SANS.",
-    howMeasured: ["OCT scan (nerve fibre layer around the disc)", "Fundus photo graded on the Frisén scale (0–5)"],
-    related: ["rnfl", "csf", "lamina-cribrosa", "optic-nerve"],
-  },
-  csf: {
-    plain: "Fluid space around the optic nerve",
-    whySpace: "The fluid that cushions the brain also surrounds the optic nerve. When it builds up in space, this sheath widens and presses on the back of the eye.",
-    howMeasured: ["Optic nerve sheath ultrasound (ONSD)", "MRI before and after flight"],
-    related: ["optic-nerve", "intracranial", "glymphatic", "optic-disc"],
-  },
-  choroid: {
-    plain: "Blood-vessel layer behind the retina",
-    whySpace: "Higher venous pressure in the head can engorge the choroid. A thicker choroid can push the retina into small folds.",
-    howMeasured: ["OCT scan (choroid thickness)", "Fundus photo for visible folds"],
-    related: ["haller", "sattler", "choriocapillaris", "vortex-veins"],
-  },
-  rnfl: {
-    plain: "Nerve fibre layer of the retina",
-    whySpace: "The nerve fibres bunch up as they enter a swollen disc, so a thicker RNFL is the main in-flight measure of disc swelling.",
-    howMeasured: ["OCT scan (peripapillary RNFL thickness)"],
-    related: ["optic-disc", "retina", "optic-nerve"],
-  },
-  "optic-nerve": {
-    plain: "Optic nerve, the cable from eye to brain",
-    whySpace: "After long flights the nerve can kink and its sheath can widen, because of fluid pressure behind the eye.",
-    howMeasured: ["Optic nerve sheath ultrasound", "MRI before and after flight"],
-    related: ["csf", "optic-disc", "lamina-cribrosa"],
-  },
-  "lamina-cribrosa": {
-    plain: "Mesh where nerve fibres leave the eye",
-    whySpace: "Eye pressure pushes on one side and brain-fluid pressure on the other. In space this balance may shift and stress the nerve fibres.",
-    howMeasured: ["Deep OCT scan of the nerve head"],
-    related: ["optic-disc", "optic-nerve", "csf"],
-  },
-  sclera: {
-    plain: "White outer wall of the eye",
-    whySpace: "Pressure from behind can flatten the back of the eye. That shortens the eye and makes near objects blurry (hyperopic shift).",
-    howMeasured: ["Ultrasound", "MRI before and after flight", "Focus (refraction) tests"],
-    related: ["scleral-stroma", "choroid", "macula"],
-  },
-  retina: {
-    plain: "Light-sensing layer at the back of the eye",
-    whySpace: "Folds in the retina and changes in its thickness are part of SANS.",
-    howMeasured: ["OCT scan", "Fundus photo"],
-    related: ["macula", "rnfl", "rpe"],
-  },
-  macula: {
-    plain: "Centre of sharp vision",
-    whySpace: "Folds from a thickened choroid often run across the macula and can blur central vision.",
-    howMeasured: ["OCT scan", "Amsler grid", "Visual acuity test"],
-    related: ["retina", "choroid", "rpe"],
-  },
-  "central-retinal-vein": {
-    plain: "Main vein draining the retina",
-    whySpace: "The headward fluid shift can congest this vein, which may add to disc swelling.",
-    howMeasured: ["Fundus photo (vein width)"],
-    related: ["optic-disc", "vortex-veins"],
-  },
-  "vortex-veins": {
-    plain: "Veins draining the back of the eye",
-    whySpace: "If these veins drain less well in space, the choroid can thicken.",
-    howMeasured: ["Indirectly, through choroid thickness on OCT"],
-    related: ["choroid", "central-retinal-vein"],
-  },
-  glymphatic: {
-    plain: "Fluid drainage along the optic nerve",
-    whySpace: "One leading theory is that fluid normally drains out along the nerve, and that this outflow is impaired in microgravity.",
-    howMeasured: ["Research only, not measured in flight yet"],
-    related: ["csf", "optic-nerve", "intracranial"],
-  },
-  intracranial: {
-    plain: "Brain and the fluid around it",
-    whySpace: "Pressure around the brain is passed along the optic nerve sheath to the back of the eye.",
-    howMeasured: ["Estimated from nerve sheath ultrasound", "Symptoms such as headache"],
-    related: ["csf", "glymphatic", "optic-nerve"],
-  },
-  rpe: {
-    plain: "Support layer under the retina",
-    whySpace: "Ripples in this bright layer on OCT are how folds in the choroid are seen.",
-    howMeasured: ["OCT scan"],
-    related: ["bruch", "choroid", "retina"],
-  },
-  bruch: {
-    plain: "Thin membrane under the retina",
-    whySpace: "Choroid folds show as waves in this membrane.",
-    howMeasured: ["OCT scan"],
-    related: ["rpe", "choriocapillaris"],
-  },
-  choriocapillaris: {
-    plain: "Tiny vessels feeding the retina",
-    whySpace: "Changes in blood flow here may follow venous congestion in space.",
-    howMeasured: ["OCT angiography"],
-    related: ["sattler", "bruch", "choroid"],
-  },
-  sattler: {
-    plain: "Middle vessel layer of the choroid",
-    whySpace: "Part of the choroid that thickens with venous congestion.",
-    howMeasured: ["OCT scan"],
-    related: ["haller", "choriocapillaris", "choroid"],
-  },
-  haller: {
-    plain: "Large vessel layer of the choroid",
-    whySpace: "Engorgement of these large vessels drives much of the choroid thickening in SANS.",
-    howMeasured: ["OCT scan"],
-    related: ["sattler", "choroid", "vortex-veins"],
-  },
-  "scleral-stroma": {
-    plain: "Collagen of the eye's outer wall",
-    whySpace: "Flattening of this wall changes how the eye focuses.",
-    howMeasured: ["OCT scan", "Ultrasound"],
-    related: ["sclera", "choroid"],
-  },
-};

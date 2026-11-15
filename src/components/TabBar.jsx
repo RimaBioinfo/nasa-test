@@ -4,8 +4,8 @@ import { Icon } from "./Icon.jsx";
 const TABS = [
   { to: "/", label: "Home", icon: "home", end: true },
   { to: "/checkups", label: "Checkups", icon: "clipboard" },
+  { to: "/learn", label: "Learn", icon: "book" },
   { to: "/risk", label: "Risk", icon: "gauge" },
-  { to: "/experiments", label: "Experiments", icon: "flask" },
 ];
 
 export function TabBar() {

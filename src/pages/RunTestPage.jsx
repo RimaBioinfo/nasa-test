@@ -10,7 +10,7 @@ export default function RunTestPage() {
   const navigate = useNavigate();
   const isCheckup = source === "checkup";
   const { data, loading, error } = useApi(isCheckup ? getCheckups : getExperiments, [source]);
-  const backTo = isCheckup ? "/checkups" : "/experiments";
+  const backTo = "/checkups";
 
   if (loading) return <Loading what="test" />;
   if (error) return <ErrorBox error={error} />;
@@ -44,7 +44,7 @@ export default function RunTestPage() {
             Back to home
           </Link>
           <Link className="btn btn-ghost" to={backTo}>
-            {isCheckup ? "All checkups" : "More experiments"}
+            All checkups
           </Link>
         </>
       }

@@ -14,8 +14,8 @@ import {
   riskScore,
   treatments,
   experiments,
-  partInfo,
 } from "../data/mockData.js";
+import { partContent } from "../data/partContent.js";
 
 const DELAY_MS = 300;
 
@@ -28,7 +28,10 @@ export function getAstronaut() {
   return mock(astronaut);
 }
 
-/** → { updatedAt, parts: { [partId]: { status, value, unit, normalRange, meaning, action } } } */
+/**
+ * → { updatedAt, parts: { [partId]: { status, value, unit, normalRange, meaning, action } } }
+ * Extra optional field per part: history: [{ day, value }].
+ */
 export function getEyeStatus() {
   return mock(eyeStatus);
 }
@@ -67,13 +70,17 @@ export function getExperiments() {
   return mock(experiments);
 }
 
-/** → { id, plain, whySpace, howMeasured: [string], related: [partId] } */
+/**
+ * → { id, plain, whatItIs, whySpace, howMeasured: [string], related: [partId],
+ *     sources: [{ title, authors, year, url }] }
+ * Content lives in src/data/partContent.js.
+ */
 export function getPartInfo(partId) {
-  const info = partInfo[partId];
+  const info = partContent[partId];
   return mock(
     info
       ? { id: partId, ...info }
-      : { id: partId, plain: null, whySpace: null, howMeasured: [], related: [] },
+      : { id: partId, plain: null, whatItIs: null, whySpace: null, howMeasured: [], related: [], sources: [] },
   );
 }
 

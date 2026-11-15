@@ -15,7 +15,8 @@ npm run build    # production build in dist/
 
 ## Structure
 
-- `src/pages/`: Home, Learn, Checkups, Risk and treatment, Experiments, guided test runner
+- `src/pages/`: Home, Learn (home + part pages), Checkups (incl. extra tests), Risk and treatment, guided test runner
+- `src/data/partContent.js`: all Learn-page text and sources per part; the data team edits only this file
 - `src/components/`: shared UI, including the anatomical `EyeAvatar.jsx` (do not edit)
 - `src/services/api.js`: the only data source for components; set `VITE_API_URL` when the backend is ready
 - `src/data/mockData.js`: mock data (imported only by `api.js`)

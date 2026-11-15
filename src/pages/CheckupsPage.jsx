@@ -5,7 +5,7 @@ import { CheckupWidget } from "../components/CheckupWidget.jsx";
 import { Icon } from "../components/Icon.jsx";
 import { CheckupStatusPill, ErrorBox, Loading, SharedNote } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
-import { getCheckups, saveExperimentResult } from "../services/api.js";
+import { getCheckups, getExperiments, saveExperimentResult } from "../services/api.js";
 
 function trendText(history) {
   if (!history || history.length < 2) return null;
@@ -127,6 +127,7 @@ const SECTIONS = [
 
 export default function CheckupsPage() {
   const { data, loading, error } = useApi(getCheckups);
+  const extras = useApi(getExperiments);
 
   return (
     <div>
@@ -168,6 +169,31 @@ export default function CheckupsPage() {
             </section>
           );
         })}
+
+      {extras.data?.length > 0 && (
+        <section className="section" id="extra-tests" aria-labelledby="sec-extra">
+          <div className="section-head">
+            <h2 id="sec-extra">Extra tests</h2>
+          </div>
+          <p className="muted" style={{ marginBottom: 12 }}>
+            Optional self-tests you can run any time. Each one guides you step by step.
+          </p>
+          <div className="card-grid">
+            {extras.data.map((e) => (
+              <article key={e.id} className="panel exp-card" aria-labelledby={`exp-${e.id}`}>
+                <h3 id={`exp-${e.id}`}>{e.name}</h3>
+                <p>{e.description}</p>
+                <p className="meta">
+                  <Icon name="clock" size={16} /> About {e.durationMin} min
+                </p>
+                <Link className="btn btn-primary" to={`/run/experiment/${e.id}`}>
+                  Start <Icon name="arrowRight" size={18} />
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -71,13 +71,23 @@ body font size, no decoration. Contains ONLY:
 - Tapping a row or a glowing part opens a simple panel: what happened, how serious,
   what to do now, and "Read more" → `/learn/:partId`.
 
-Not on Home: the parts chips and OCT toggle (→ Learn), the checkups widget (→ Checkups).
+Not on Home: the parts list and OCT toggle (→ Learn), the checkups widget (→ Checkups).
 
-### Learn `/learn/:partId`
-What the part is, why it matters in space, what the astronaut's numbers mean, how it is
-measured (OCT, ultrasound, fundus photo, tonometry), and clickable related parts.
-Show an `EyeAvatar` with this part selected, the "Whole eye" / "Retina layers (OCT)" toggle,
-and status-colored chips for the SANS-key parts with "Show all parts" for the full `ALL_PARTS` list.
+### Learn home `/learn`
+- `EyeAvatar` with the "Whole eye" / "Retina layers (OCT)" toggle.
+- Below it, all parts from `ALL_PARTS` for the current view, grouped by their `group` field,
+  with a status dot for parts that have a status. Hovering/focusing a part highlights it on
+  the eye (green glow); tapping a part on the eye or in the list goes to `/learn/:partId`.
+
+### Part page `/learn/:partId`
+Same layout for every part, same minimal style as Home:
+- Back button to `/learn`, small `EyeAvatar` with this part selected, then the name
+  (plain language first, medical term second).
+- Sections: "What it is", "Why it matters in space", "Your latest result" (value, normal
+  range, small trend chart; hidden if the part isn't measured), "How it's measured",
+  "Related parts" (clickable), "Sources" ("Sources coming soon" in muted text if empty).
+- All text comes from `src/data/partContent.js` via `getPartInfo()`; the data team edits
+  only that file. Measured values come from `getEyeStatus()`, never from partContent.
 
 ### Checkups `/checkups`
 - Daily: vitals from the Astroskin smart shirt (Canadian Space Agency): heart rate, blood
@@ -87,6 +97,9 @@ and status-colored chips for the SANS-key parts with "Show all parts" for the fu
 - Monthly: OCT scan, fundus photo, optic nerve sheath ultrasound, eye pressure (tonometry).
 - Each checkup: last result, trend, next due date.
 - An "At a glance" widget with tabs Daily / Weekly / Monthly (done, due today, or overdue).
+- "Extra tests" section at the bottom: the optional self-tests from `getExperiments()`
+  (Amsler grid, contrast sensitivity, symptom diary). Each has "Start", which opens a guided
+  step-by-step screen (`/run/experiment/:id`) and saves a mock result.
 
 ### Risk and treatment `/risk`
 - SANS risk score 0–100 as a gauge, plus risk group (Low / Medium / High).
@@ -98,13 +111,9 @@ and status-colored chips for the SANS-key parts with "Show all parts" for the fu
 - "Emergency protocol": numbered steps and a "Message flight surgeon" button.
 - Label all medical content: "Placeholder content, to be reviewed by a flight surgeon."
 
-### Experiments `/experiments`
-Extra self-tests the astronaut can run (Amsler grid, contrast sensitivity, symptom diary).
-Each has "Start", which opens a guided step-by-step screen and saves a mock result.
-
 ### Navigation
-Bottom tab bar: Home, Checkups, Risk, Experiments (icon + short label, at least 48px tall).
-Learn is reached through "Read more" and related-part links. The syndrome registry lives in
+Bottom tab bar: Home, Checkups, Learn, Risk (icon + short label, at least 48px tall).
+`/experiments` redirects to `/checkups` (the tests live in "Extra tests"). The syndrome registry lives in
 `src/syndromes/` ("SANS" active, others "Coming soon"); it has no place in the tab bar yet.
 
 ## Data layer
@@ -114,13 +123,14 @@ Later each one switches to `fetch(\`${import.meta.env.VITE_API_URL}/...\`)`, so 
 return shapes stable:
 
 - `getAstronaut()` → `{ id, name, initials, mission, missionDay, missionLength }`
-- `getEyeStatus()` → `{ updatedAt, parts: { [partId]: { status, value, unit, normalRange, meaning, action } } }`
+- `getEyeStatus()` → `{ updatedAt, parts: { [partId]: { status, value, unit, normalRange, meaning, action, history?: [{ day, value }] } } }`
 - `getAlerts()` → `[{ id, kind: "warning"|"task", severity, title, body, partId?, checkupId?, createdAt }]`
 - `getCheckups()` → `[{ id, name, frequency: "daily"|"weekly"|"monthly", status: "done"|"due"|"overdue", lastResult, nextDue, history: [{ date, value }] }]`
 - `getRiskScore()` → `{ score, group: "low"|"medium"|"high", features: [{ id, name, value, unit, weight, contribution }], history: [{ day, score }] }`
 - `getTreatments()` → `{ prevention: [{ title, body }], emergency: [{ step, title, body }] }`
 - `getExperiments()` → `[{ id, name, description, durationMin, steps: [string] }]`
-- `getPartInfo(partId)` → `{ id, plain, whySpace, howMeasured, related: [partId] }`
+- `getPartInfo(partId)` → `{ id, plain, whatItIs, whySpace, howMeasured: [string], related: [partId], sources: [{ title, authors, year, url }] }`
+  (reads `src/data/partContent.js`)
 
 Mock data should tell a consistent story: mission day 142, medium risk, optic disc and CSF
 space in alert, choroid and RNFL in warning, everything else normal.
@@ -141,9 +151,9 @@ space in alert, choroid and RNFL in warning, everything else normal.
 ```
 src/
   components/   EyeAvatar.jsx, AlertCard.jsx, PartChips.jsx, PartPanel.jsx, CheckupWidget.jsx, ...
-  pages/        HomePage.jsx, LearnPage.jsx, CheckupsPage.jsx, RiskPage.jsx, ExperimentsPage.jsx
+  pages/        HomePage.jsx, LearnHomePage.jsx, LearnPage.jsx, CheckupsPage.jsx, RiskPage.jsx, RunTestPage.jsx
   services/     api.js
-  data/         mockData.js
+  data/         mockData.js, partContent.js
   styles/       theme.css
   App.jsx, main.jsx
 ```

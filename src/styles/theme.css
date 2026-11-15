@@ -451,3 +451,30 @@ dialog.sheet::backdrop { background: rgba(4, 10, 18, 0.7); }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .problem-panel { display: flex; flex-direction: column; gap: 18px; }
 .problem-panel h3 { font-family: var(--font-body); font-size: 16px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+
+/* ---------- learn (minimal, like home) ---------- */
+.learn-home { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
+.part-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px 32px; }
+.part-group-title { font-family: var(--font-body); font-size: 16px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.part-list { list-style: none; display: flex; flex-direction: column; }
+.part-row {
+  display: flex; align-items: center; gap: 12px;
+  min-height: var(--touch); padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text); text-decoration: none;
+}
+.part-row:hover, .part-row:focus-visible { background: var(--panel-hover); }
+.part-row-name { flex: 1; min-width: 0; }
+.dot-none { background: transparent; border: 1px solid var(--border); }
+
+.learn-page { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+.learn-page h1 { font-size: 30px; }
+.learn-page section h2 { font-family: var(--font-body); font-size: 16px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.learn-page section p { font-size: 16px; }
+.back-btn { align-self: flex-start; }
+.learn-eye { max-width: 460px; width: 100%; }
+.result-value { font-family: var(--font-head); font-size: 28px; font-weight: 600; }
+.result-value .muted { font-family: var(--font-body); font-size: 16px; font-weight: 400; }
+.plain-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.plain-list li { padding-left: 16px; position: relative; }
+.plain-list li::before { content: ""; position: absolute; left: 0; top: 0.7em; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
