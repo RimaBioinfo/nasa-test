@@ -8,6 +8,8 @@ import HomePage from "./pages/HomePage.jsx";
 const LearnPage = lazy(() => import("./pages/LearnPage.jsx"));
 const CheckupsPage = lazy(() => import("./pages/CheckupsPage.jsx"));
 const RiskPage = lazy(() => import("./pages/RiskPage.jsx"));
+const ExperimentsPage = lazy(() => import("./pages/ExperimentsPage.jsx"));
+const RunTestPage = lazy(() => import("./pages/RunTestPage.jsx"));
 
 const page = (el) => <Suspense fallback={<Loading what="page" />}>{el}</Suspense>;
 
@@ -20,6 +22,8 @@ export default function App() {
         <Route path="learn/:partId" element={page(<LearnPage />)} />
         <Route path="checkups" element={page(<CheckupsPage />)} />
         <Route path="risk" element={page(<RiskPage />)} />
+        <Route path="experiments" element={page(<ExperimentsPage />)} />
+        <Route path="run/:source/:id" element={page(<RunTestPage />)} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
