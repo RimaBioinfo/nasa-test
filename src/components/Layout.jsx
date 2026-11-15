@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { SideNav } from "./SideNav.jsx";
+import { TabBar } from "./TabBar.jsx";
 import { TopBar } from "./TopBar.jsx";
 import { useApi } from "../hooks/useApi.js";
-import { getAstronaut, getRiskScore } from "../services/api.js";
+import { getAstronaut, getEyeStatus } from "../services/api.js";
 
 export function Layout() {
-  const [navOpen, setNavOpen] = useState(false);
   const { data: astronaut } = useApi(getAstronaut);
-  const { data: risk } = useApi(getRiskScore);
+  const { data: eyeStatus } = useApi(getEyeStatus);
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -17,14 +16,11 @@ export function Layout() {
 
   return (
     <div className="shell">
-      <SideNav open={navOpen} onToggle={() => setNavOpen((o) => !o)} onNavigate={() => setNavOpen(false)} />
-      {navOpen && (
-        <button type="button" className="nav-scrim" aria-label="Close menu" onClick={() => setNavOpen(false)} />
-      )}
       <main className="shell-main" id="main">
-        <TopBar astronaut={astronaut} riskGroup={risk?.group} />
+        <TopBar astronaut={astronaut} eyeStatus={eyeStatus} />
         <Outlet />
       </main>
+      <TabBar />
     </div>
   );
 }

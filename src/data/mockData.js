@@ -1,5 +1,5 @@
 /*
- * Mock data for OcuGuard. Only src/services/api.js may import this file.
+ * Mock data for HMSA. Only src/services/api.js may import this file.
  *
  * Story: mission day 142 of 400, medium SANS risk.
  *   alert   -> optic disc, CSF space around the nerve
@@ -104,6 +104,7 @@ export const alerts = [
     title: "Optic disc swelling increased since last scan",
     body: "Swelling went from grade 1 to grade 2. Do an extra OCT scan today and message the flight surgeon.",
     partId: "optic-disc",
+    checkupId: "oct",
     createdAt: "2026-11-14T08:30:00Z",
   },
   {

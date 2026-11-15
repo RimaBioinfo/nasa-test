@@ -1,179 +1,197 @@
-import { useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { EyeAvatar } from "../components/EyeAvatar.jsx";
 import { AlertCard } from "../components/AlertCard.jsx";
 import { NextStepCard, pickNextStep } from "../components/NextStepCard.jsx";
-import { PartChips } from "../components/PartChips.jsx";
-import { PartPanel } from "../components/PartPanel.jsx";
-import { CheckupWidget } from "../components/CheckupWidget.jsx";
-import { PARTS_BY_ID } from "../components/parts.js";
-import { Loading, SharedNote } from "../components/ui.jsx";
+import { MessageSurgeonButton } from "../components/MessageSurgeonButton.jsx";
+import { Sheet } from "../components/Sheet.jsx";
+import { Icon } from "../components/Icon.jsx";
+import { PARTS_BY_ID, partLabels, SEVERITY_TEXT } from "../components/parts.js";
+import { Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { getAlerts, getCheckups, getEyeStatus } from "../services/api.js";
-import { ACTIVE_SYNDROME } from "../syndromes/index.js";
 
-const DISMISS_KEY = "ocuguard.dismissedAlerts";
-const readDismissed = () => {
-  try {
-    return JSON.parse(sessionStorage.getItem(DISMISS_KEY)) ?? [];
-  } catch {
-    return [];
-  }
-};
-const writeDismissed = (ids) => {
-  try {
-    sessionStorage.setItem(DISMISS_KEY, JSON.stringify(ids));
-  } catch {
-    /* storage unavailable: dismissals last until reload */
-  }
-};
+const RANK = { alert: 0, warning: 1 };
 
-const prefersReducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-
+/*
+ * Home answers two questions in 3 seconds: "Am I okay?" and "What do I do now?"
+ * Keep it to: status line (in Layout), next step, the eye, and the problem list.
+ */
 export default function HomePage() {
   const navigate = useNavigate();
   const eye = useApi(getEyeStatus);
   const alerts = useApi(getAlerts);
   const checkups = useApi(getCheckups);
 
-  const [view, setView] = useState("eye");
-  const [selectedId, setSelectedId] = useState(ACTIVE_SYNDROME.defaultPart.eye);
-  const [dismissed, setDismissed] = useState(readDismissed);
-  const panelRef = useRef(null);
+  const [openPart, setOpenPart] = useState(null);
+  const [alertsOpen, setAlertsOpen] = useState(false);
 
-  const parts = eye.data?.parts ?? {};
-  const statusById = useMemo(
-    () => Object.fromEntries(Object.entries(parts).map(([id, p]) => [id, p.status])),
+  const parts = eye.data?.parts;
+  const states = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(parts ?? {})
+          .filter(([, p]) => p.status !== "normal")
+          .map(([id, p]) => [id, p.status]),
+      ),
     [parts],
   );
-  const avatarStates = useMemo(
-    () => Object.fromEntries(Object.entries(statusById).filter(([, s]) => s !== "normal")),
-    [statusById],
-  );
 
-  const nextStep = pickNextStep(alerts.data ?? [], checkups.data ?? []);
-  const nextAlertId = nextStep.type === "alert" ? nextStep.alert.id : null;
-  const stack = (alerts.data ?? []).filter((a) => a.id !== nextAlertId && !dismissed.includes(a.id));
-  const hiddenCount = (alerts.data ?? []).filter((a) => dismissed.includes(a.id)).length;
+  // problems: alerts first, whole-eye parts before retina layers, max 3
+  const problems = Object.keys(states)
+    .sort(
+      (a, b) =>
+        RANK[states[a]] - RANK[states[b]] ||
+        (PARTS_BY_ID[a]?.view === "eye" ? 0 : 1) - (PARTS_BY_ID[b]?.view === "eye" ? 0 : 1),
+    )
+    .slice(0, 3);
 
-  const switchView = (v) => {
-    setView(v);
-    if (PARTS_BY_ID[selectedId]?.view !== v) setSelectedId(ACTIVE_SYNDROME.defaultPart[v]);
+  const alertList = alerts.data ?? [];
+  const checkupList = checkups.data ?? [];
+  const step = pickNextStep(alertList, checkupList);
+  const others = alertList.filter((a) => step.type !== "alert" || a.id !== step.alert.id);
+  const problemText = (id) =>
+    alertList.find((a) => a.kind === "warning" && a.partId === id)?.title ?? `${partLabels(id).plain} needs checking`;
+
+  const startCheckup = (id) => navigate(`/run/checkup/${id}`);
+  const showPart = (id) => {
+    setAlertsOpen(false);
+    setOpenPart(id);
   };
 
-  const selectPart = (id, { scroll = false } = {}) => {
-    const part = PARTS_BY_ID[id];
-    if (!part) return;
-    if (part.view !== view) setView(part.view);
-    setSelectedId(id);
-    if (scroll) {
-      requestAnimationFrame(() =>
-        panelRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "nearest" }),
-      );
-    }
-  };
-
-  const onDetails = (alert) => alert.partId && selectPart(alert.partId, { scroll: true });
-  const onStart = (checkupId) => checkupId && navigate(`/run/checkup/${checkupId}`);
-  const dismiss = (alert) => {
-    const next = [...dismissed, alert.id];
-    setDismissed(next);
-    writeDismissed(next);
-  };
-  const restore = () => {
-    setDismissed([]);
-    writeDismissed([]);
-  };
+  // what the one big button does
+  let card = null;
+  if (step.type === "alert") {
+    const a = step.alert;
+    const checkup = checkupList.find((c) => c.id === a.checkupId);
+    card = {
+      title: a.title,
+      severity: a.kind === "task" ? "warning" : a.severity,
+      seriousness: a.kind === "task" ? "Test due today" : SEVERITY_TEXT[a.severity],
+      todo: a.partId ? (parts?.[a.partId]?.action ?? a.body) : a.body,
+      ...(checkup?.steps
+        ? { actionLabel: `Start ${checkup.name.toLowerCase()}`, onAction: () => startCheckup(checkup.id) }
+        : a.partId
+          ? { actionLabel: "See what to do", onAction: () => showPart(a.partId) }
+          : {}),
+    };
+  } else if (step.type === "checkup") {
+    const c = step.checkup;
+    card = {
+      title: `${c.name} is overdue`,
+      severity: "warning",
+      seriousness: `It was due on ${c.nextDue}`,
+      todo: null,
+      ...(c.steps ? { actionLabel: "Start test", onAction: () => startCheckup(c.id) } : {}),
+    };
+  } else {
+    card = { title: "Nothing to do right now", severity: "normal", todo: "No tests are due and your eyes look normal." };
+  }
 
   const loading = eye.loading || alerts.loading || checkups.loading;
-  const nextPartStatus = nextStep.type === "alert" && nextStep.alert.partId ? parts[nextStep.alert.partId] : null;
+  const sel = openPart && parts?.[openPart];
+  const selLabels = openPart && partLabels(openPart);
 
   return (
-    <div className="home-grid">
-      <div className="home-main">
-        <h1 className="visually-hidden">Home</h1>
-        {loading ? (
-          <Loading what="your status" />
-        ) : (
-          <>
-            <NextStepCard
-              step={nextStep}
-              partStatus={nextPartStatus}
-              onDetails={onDetails}
-              onStart={onStart}
-            />
+    <div className="home">
+      <h1 className="visually-hidden">Home</h1>
 
-            {(stack.length > 0 || hiddenCount > 0) && (
-              <section className="alert-stack" aria-label="Alerts and tasks">
-                {stack.map((a) => (
-                  <AlertCard
-                    key={a.id}
-                    alert={a}
-                    onDetails={onDetails}
-                    onStart={(al) => onStart(al.checkupId)}
-                    onDismiss={dismiss}
-                  />
-                ))}
-                {hiddenCount > 0 && (
-                  <p className="dismissed-note">
-                    <span>
-                      {hiddenCount} {hiddenCount === 1 ? "alert" : "alerts"} hidden
+      {loading ? (
+        <Loading what="your status" />
+      ) : (
+        <div>
+          <NextStepCard {...card} />
+          {others.length > 0 && (
+            <button type="button" className="link-btn more-alerts" onClick={() => setAlertsOpen(true)}>
+              {others.length} more {others.length === 1 ? "alert" : "alerts"}
+            </button>
+          )}
+        </div>
+      )}
+
+      <section aria-label="Your eye">
+        <EyeAvatar
+          view="eye"
+          states={states}
+          selectedId={openPart ?? undefined}
+          onSelect={(id) => states[id] && setOpenPart(id)}
+        />
+      </section>
+
+      {parts && (
+        <section aria-labelledby="problems-title">
+          <h2 id="problems-title" className="visually-hidden">
+            Problems
+          </h2>
+          {problems.length === 0 ? (
+            <p className="all-normal">
+              <Icon name="check" /> All eye checks normal
+            </p>
+          ) : (
+            <ul className="problem-list">
+              {problems.map((id) => (
+                <li key={id}>
+                  <button type="button" className="problem-row" onClick={() => setOpenPart(id)}>
+                    <span className={`dot dot-${states[id]}`} aria-hidden="true" />
+                    <span className="problem-text">
+                      {problemText(id)}
+                      <span className="visually-hidden">, {SEVERITY_TEXT[states[id]]}</span>
                     </span>
-                    <button type="button" className="btn btn-ghost" onClick={restore}>
-                      Show again
-                    </button>
-                  </p>
-                )}
-              </section>
-            )}
-          </>
-        )}
+                    <span className="problem-cta">
+                      See what to do <Icon name="arrowRight" size={18} />
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
-        <section className="eye-stage" aria-labelledby="eye-title">
-          <div className="eye-stage-head">
+      <Sheet open={!!sel} onClose={() => setOpenPart(null)} title={selLabels?.plain ?? ""}>
+        {sel && (
+          <div className="problem-panel">
+            {selLabels.medical && <p className="muted">{selLabels.medical}</p>}
             <div>
-              <h2 id="eye-title">Your eye today</h2>
-              <p className="muted small">
-                Tap a part to see its details.
-                {eye.data && ` Last scan ${new Date(eye.data.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}.`}
+              <h3>What happened</h3>
+              <p>{sel.meaning}</p>
+              <p className="muted">
+                Measured {sel.value} {sel.unit}, normal {sel.normalRange}
               </p>
             </div>
-            <div className="seg" role="group" aria-label="Eye view">
-              <button type="button" aria-pressed={view === "eye"} onClick={() => switchView("eye")}>
-                Whole eye
-              </button>
-              <button type="button" aria-pressed={view === "oct"} onClick={() => switchView("oct")}>
-                Retina layers (OCT)
-              </button>
+            <div>
+              <h3>How serious</h3>
+              <p className="next-step-sev">
+                <span className={`dot dot-${sel.status}`} aria-hidden="true" />
+                {SEVERITY_TEXT[sel.status]}
+              </p>
+            </div>
+            <div>
+              <h3>What to do now</h3>
+              <p>{sel.action}</p>
+            </div>
+            <div className="btn-row">
+              <Link className="btn" to={`/learn/${openPart}`}>
+                Read more
+              </Link>
+              {sel.status === "alert" && <MessageSurgeonButton context={selLabels.plain} />}
             </div>
           </div>
+        )}
+      </Sheet>
 
-          <EyeAvatar view={view} states={avatarStates} selectedId={selectedId} onSelect={(id) => selectPart(id)} />
-
-          <div className="legend" aria-hidden="true">
-            <span>
-              <i className="dot" /> Normal
-            </span>
-            <span>
-              <i className="dot dot-warning" /> Watch
-            </span>
-            <span>
-              <i className="dot dot-alert" /> Alert
-            </span>
-            <span>
-              <i className="dot dot-selected" /> Selected
-            </span>
-          </div>
-
-          <PartChips view={view} statusById={statusById} selectedId={selectedId} onSelect={(id) => selectPart(id)} />
-        </section>
-        <SharedNote />
-      </div>
-
-      <aside className="home-side" ref={panelRef} aria-label="Details">
-        {eye.loading ? <Loading what="eye details" /> : <PartPanel partId={selectedId} partStatus={parts[selectedId]} />}
-        {checkups.data && <CheckupWidget checkups={checkups.data} />}
-      </aside>
+      <Sheet open={alertsOpen} onClose={() => setAlertsOpen(false)} title="Other alerts">
+        <div className="alert-stack">
+          {others.map((a) => (
+            <AlertCard
+              key={a.id}
+              alert={a}
+              onDetails={(al) => al.partId && showPart(al.partId)}
+              onStart={(al) => al.checkupId && startCheckup(al.checkupId)}
+            />
+          ))}
+        </div>
+      </Sheet>
     </div>
   );
 }

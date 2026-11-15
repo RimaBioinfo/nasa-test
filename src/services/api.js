@@ -1,5 +1,5 @@
 /*
- * OcuGuard data layer. Every component gets its data from here.
+ * HMSA data layer. Every component gets its data from here.
  *
  * Right now each function returns mock data after a short delay. When the backend
  * is ready, set VITE_API_URL and replace the body of each function with

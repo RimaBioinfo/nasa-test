@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Sparkline } from "../components/charts.jsx";
+import { CheckupWidget } from "../components/CheckupWidget.jsx";
 import { Icon } from "../components/Icon.jsx";
 import { CheckupStatusPill, ErrorBox, Loading, SharedNote } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -132,6 +133,11 @@ export default function CheckupsPage() {
       <h1 className="page-title">Checkups</h1>
       <p className="page-intro">Your regular health checks: last result, trend and when the next one is due.</p>
       <SharedNote />
+      {data && (
+        <div style={{ maxWidth: 520, marginTop: 16 }}>
+          <CheckupWidget checkups={data} title="At a glance" showSeeAll={false} />
+        </div>
+      )}
       {loading && <Loading what="checkups" />}
       {error && <ErrorBox error={error} />}
       {data &&

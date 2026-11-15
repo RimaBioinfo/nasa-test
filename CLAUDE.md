@@ -1,4 +1,4 @@
-# OcuGuard: astronaut eye health monitor (NASA hackathon)
+# HMSA: astronaut eye health monitor (NASA hackathon)
 
 A health-monitoring web app for astronauts on long space missions, focused on SANS
 (Spaceflight Associated Neuro-ocular Syndrome). SANS is the first "syndrome module";
@@ -19,6 +19,7 @@ not decided yet, so the frontend runs fully on mock data for now.
   `src/styles/theme.css`), no Tailwind.
 - After any change, run `npm run build` and fix every error before telling me you're done.
 - Commit after each working step with a clear message.
+- Home screen stays minimal: status, next step, eye, problems only.
 
 ## The EyeAvatar component (already exists)
 
@@ -58,24 +59,25 @@ SANS-key part ids for mock data and chips:
 ## Pages
 
 ### Home `/`
-- Top bar: astronaut name and initials avatar, mission name, mission day ("Day 142 of 400"),
-  overall SANS risk badge (Low / Medium / High).
-- "Next step" card, then a stack of dismissible alert cards above the eye. Two kinds:
-  - Warning: something changed ("Optic disc swelling increased since last scan") → "See details"
-  - Task: a test is due ("Weekly visual acuity test due today") → "Start test"
-- Center (the hero): `EyeAvatar` with a toggle "Whole eye" / "Retina layers (OCT)".
-- Under the eye: chips for the SANS-key parts of the current view, colored by status
-  (gray normal, yellow warning, red alert). Clicking a chip or a part on the eye selects it.
-  A "Show all parts" button expands the full list from `ALL_PARTS`.
-- Side panel for the selected part: name, status, measured value vs normal range
-  ("RNFL thickness 132 µm, normal 80–110"), what it means in plain language, recommended action,
-  and "Read more" → `/learn/:partId`.
-- Checkups widget with tabs Daily / Weekly / Monthly, each item: done, due today, or overdue.
+Answers only "Am I okay?" and "What do I do now?" in 3 seconds. Lots of empty space, one
+body font size, no decoration. Contains ONLY:
+- Slim top line (on every page): astronaut name, mission day, and one overall status
+  "Eyes: Normal / Watch / Alert" in the status color. No separate risk badge.
+- ONE "Next step" card with one large button for the most urgent action. If there are other
+  alerts, a small "N more alerts" link opens them in a bottom sheet.
+- `EyeAvatar`, large, whole-eye view only. Only non-normal parts glow.
+- Under the eye: only the parts in warning or alert (max 3 rows), each with the plain-language
+  problem + "See what to do". If everything is normal: "All eye checks normal".
+- Tapping a row or a glowing part opens a simple panel: what happened, how serious,
+  what to do now, and "Read more" → `/learn/:partId`.
+
+Not on Home: the parts chips and OCT toggle (→ Learn), the checkups widget (→ Checkups).
 
 ### Learn `/learn/:partId`
 What the part is, why it matters in space, what the astronaut's numbers mean, how it is
 measured (OCT, ultrasound, fundus photo, tonometry), and clickable related parts.
-Show a small `EyeAvatar` with this part selected.
+Show an `EyeAvatar` with this part selected, the "Whole eye" / "Retina layers (OCT)" toggle,
+and status-colored chips for the SANS-key parts with "Show all parts" for the full `ALL_PARTS` list.
 
 ### Checkups `/checkups`
 - Daily: vitals from the Astroskin smart shirt (Canadian Space Agency): heart rate, blood
@@ -84,6 +86,7 @@ Show a small `EyeAvatar` with this part selected.
 - Weekly: visual acuity, Amsler grid, near-vision test.
 - Monthly: OCT scan, fundus photo, optic nerve sheath ultrasound, eye pressure (tonometry).
 - Each checkup: last result, trend, next due date.
+- An "At a glance" widget with tabs Daily / Weekly / Monthly (done, due today, or overdue).
 
 ### Risk and treatment `/risk`
 - SANS risk score 0–100 as a gauge, plus risk group (Low / Medium / High).
@@ -100,8 +103,9 @@ Extra self-tests the astronaut can run (Amsler grid, contrast sensitivity, sympt
 Each has "Start", which opens a guided step-by-step screen and saves a mock result.
 
 ### Navigation
-Side nav (collapses on tablet) with the pages above and a syndrome selector:
-"SANS" active, others shown as "Coming soon".
+Bottom tab bar: Home, Checkups, Risk, Experiments (icon + short label, at least 48px tall).
+Learn is reached through "Read more" and related-part links. The syndrome registry lives in
+`src/syndromes/` ("SANS" active, others "Coming soon"); it has no place in the tab bar yet.
 
 ## Data layer
 

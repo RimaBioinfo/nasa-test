@@ -8,7 +8,7 @@ const TABS = [
   { id: "monthly", label: "Monthly" },
 ];
 
-export function CheckupWidget({ checkups = [] }) {
+export function CheckupWidget({ checkups = [], title = "Checkups", showSeeAll = true }) {
   const [tab, setTab] = useState("daily");
   const items = checkups.filter((c) => c.frequency === tab);
   const count = (f) => checkups.filter((c) => c.frequency === f && c.status !== "done").length;
@@ -16,8 +16,8 @@ export function CheckupWidget({ checkups = [] }) {
   return (
     <section className="panel" aria-labelledby="checkups-title">
       <div className="panel-head" style={{ marginBottom: 10 }}>
-        <h2 id="checkups-title">Checkups</h2>
-        <Link to="/checkups">See all</Link>
+        <h2 id="checkups-title">{title}</h2>
+        {showSeeAll && <Link to="/checkups">See all</Link>}
       </div>
       <div className="seg tabs" role="tablist" aria-label="Checkup frequency">
         {TABS.map((t) => (

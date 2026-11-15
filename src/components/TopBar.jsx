@@ -1,38 +1,35 @@
-import { RiskBadge } from "./ui.jsx";
+import { STATUS_TEXT } from "./parts.js";
 
-export function TopBar({ astronaut, riskGroup }) {
-  if (!astronaut) return <header className="topbar" aria-busy="true" style={{ minHeight: 52 }} />;
-  const { name, initials, mission, missionDay, missionLength } = astronaut;
-  const pct = Math.min(100, Math.round((missionDay / missionLength) * 100));
+const RANK = { normal: 0, warning: 1, alert: 2 };
+
+/** Worst status across all measured eye parts. */
+export function overallEyeStatus(eyeStatus) {
+  const all = Object.values(eyeStatus?.parts ?? {}).map((p) => p.status);
+  return all.reduce((worst, s) => (RANK[s] > RANK[worst] ? s : worst), "normal");
+}
+
+/** Slim top line: who, which day, and one overall eye status. */
+export function TopBar({ astronaut, eyeStatus }) {
+  const status = eyeStatus ? overallEyeStatus(eyeStatus) : null;
   return (
-    <header className="topbar">
-      <div className="who">
-        <span className="avatar" aria-hidden="true">
-          {initials}
-        </span>
-        <div>
-          <p className="who-name">{name}</p>
-          <p className="who-mission">{mission}</p>
-        </div>
-      </div>
-      <div className="topbar-right">
-        <div className="mission-day">
-          <strong>
-            Day {missionDay} of {missionLength}
-          </strong>
-          <div
-            className="day-bar"
-            role="progressbar"
-            aria-label="Mission progress"
-            aria-valuenow={pct}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            <span style={{ width: `${pct}%` }} />
-          </div>
-        </div>
-        <RiskBadge group={riskGroup} />
-      </div>
+    <header className="statusline">
+      <p className="statusline-who">
+        <span className="statusline-app">HMSA</span>
+        {astronaut && (
+          <>
+            <span>{astronaut.name}</span>
+            <span className="muted">
+              Day {astronaut.missionDay} of {astronaut.missionLength}
+            </span>
+          </>
+        )}
+      </p>
+      {status && (
+        <p className={`statusline-eyes st-${status}`} role="status">
+          <span className={`dot dot-${status}`} aria-hidden="true" />
+          Eyes: {STATUS_TEXT[status]}
+        </p>
+      )}
     </header>
   );
 }

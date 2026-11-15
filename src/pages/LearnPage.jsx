@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { EyeAvatar } from "../components/EyeAvatar.jsx";
+import { PartChips } from "../components/PartChips.jsx";
 import { Icon } from "../components/Icon.jsx";
 import { PARTS_BY_ID, partLabels, STATUS_TEXT } from "../components/parts.js";
 import { ErrorBox, Loading, PlaceholderNote, StatusPill } from "../components/ui.jsx";
@@ -24,6 +25,16 @@ export default function LearnPage() {
       ),
     [parts],
   );
+  const statusById = useMemo(
+    () => Object.fromEntries(Object.entries(parts ?? {}).map(([id, p]) => [id, p.status])),
+    [parts],
+  );
+
+  // the view follows the part being read, and can be switched by hand
+  const [view, setView] = useState(part?.view ?? "eye");
+  useEffect(() => {
+    if (part) setView(part.view);
+  }, [part]);
 
   if (!part) {
     return (
@@ -130,15 +141,29 @@ export default function LearnPage() {
 
         <aside className="learn-side">
           <section className="eye-stage" aria-label={`Where the ${plain.toLowerCase()} is`}>
+            <div className="seg tabs" role="group" aria-label="Eye view" style={{ marginBottom: 10 }}>
+              <button type="button" aria-pressed={view === "eye"} onClick={() => setView("eye")}>
+                Whole eye
+              </button>
+              <button type="button" aria-pressed={view === "oct"} onClick={() => setView("oct")}>
+                Retina layers (OCT)
+              </button>
+            </div>
             <EyeAvatar
-              view={part.view}
+              view={view}
               states={states}
               selectedId={partId}
               onSelect={(id) => id !== partId && navigate(`/learn/${id}`)}
             />
             <p className="muted small" style={{ marginTop: 8 }}>
-              Highlighted in green. Tap another part to learn about it.
+              Highlighted in green. Tap a part or a chip to learn about it.
             </p>
+            <PartChips
+              view={view}
+              statusById={statusById}
+              selectedId={partId}
+              onSelect={(id) => id !== partId && navigate(`/learn/${id}`)}
+            />
           </section>
 
           {data?.related?.length > 0 && (
